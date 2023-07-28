@@ -11,34 +11,44 @@ import (
 	"time"
 )
 
-const filePath = "heartbeat.txt"
-const logFilePath = "pulse_logs.txt"
+const filePath = "RLEB/heartbeat.txt"
+const logFilePath = "Pulse/pulse_logs.txt"
+const noResponseThresholdMinutes = 10
+const pulseDeadThresholdSeconds = 1000
 var logs []string
 
 func flushLog(){
-	log.Printf("Flushing %d logs.", len(logs))
+	// Important: We have to not call printAndAddToLog() because it might loop.
+
+	directory, _ := os.Getwd()
+	flush_message := fmt.Sprintf("[%s] Flushing %d logs.", directory,  len(logs)+1)
+	log.Print(flush_message)
+	logs = append(logs, flush_message)
 	// Write to pulse logs.
 	existingContent, err := ioutil.ReadFile(logFilePath)
 	if err != nil {
 		log.Println("Log file not found. Creating a new one.")
 	}
 
-	// Append the new message to the existing content
+	// Append the new message to the existing content.
+	// Optimize this if we ever have much larger chunk sizes in the future.
 	newContent := existingContent
 	for _, logRow := range(logs){
-		newContent = append(newContent, []byte(logRow+"\n")...)
+		newContent = append(newContent, []byte(logRow)...)
 	}
 
 	// Write the updated content back to the log file
 	if err := ioutil.WriteFile(logFilePath, newContent, 0644); err != nil {
-		log.Printf("Failed to write to log file: %v", err)
+		error_message := fmt.Sprintf("Failed to write to log file: %v", err)
+		log.Print(error_message)
+		logs = append(logs, error_message)
 	}
 
 	logs = []string{}
 }
 
 func printAndAddToLog(newLog string){
-	log.Printf(newLog)
+	log.Print(newLog)
 	timestamped_log := fmt.Sprintf("%s - %s", time.Now().UTC().Format(time.RFC3339), newLog)
 	logs = append(logs, timestamped_log)
 	if len(logs) > 100{
@@ -80,8 +90,8 @@ func main() {
 		// If the file hasn't been written in 10m, restart.
 		timeDiff := time.Since(lastModified)
 		printAndAddToLog(fmt.Sprintf("Last heartbeat received %s ago", timeDiff))
-		if timeDiff > 10*time.Minute {
-			printAndAddToLog(fmt.Sprintf("Restarting due to no heartbeat received in 10 minutes."))
+		if timeDiff > noResponseThresholdMinutes * time.Minute {
+			printAndAddToLog(fmt.Sprintf("Restarting due to no heartbeat received in %d minutes.", noResponseThresholdMinutes))
 			restart()
 		}
 
@@ -102,8 +112,8 @@ func main() {
 		}
 
 		// If heartbeat is greater than 1000s, restart machine.
-		if heartbeat > 1000 {
-			printAndAddToLog(fmt.Sprintf("Restarting due to heartbeat > 5000 seconds."))
+		if heartbeat > pulseDeadThresholdSeconds {
+			printAndAddToLog(fmt.Sprintf("Restarting due to heartbeat > %d seconds.", pulseDeadThresholdSeconds))
 			restart()
 		}
 
