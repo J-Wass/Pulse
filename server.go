@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-const filePath = "RLEB/heartbeat.txt"
-const logFilePath = "Pulse/pulse_logs.txt"
+const filePath = "../RLEB/heartbeat.txt"
+const logFilePath = "pulse_logs.txt"
 const noResponseThresholdMinutes = 10
 const pulseDeadThresholdSeconds = 1000
 var logs []string
