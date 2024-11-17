@@ -11,10 +11,9 @@ import (
 	"time"
 )
 
-const filePath = "RLEB/heartbeat.txt"
+const filePath = "/home/pi/RLEB/heartbeat.txt"
 const noResponseThresholdMinutes = 10
 const pulseDeadThresholdSeconds = 1000
-var logs []string
 
 func restart() {
 	// Overwrite the heartbeat to 0 to prevent cycles.
