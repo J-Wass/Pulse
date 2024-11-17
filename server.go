@@ -50,7 +50,7 @@ func main() {
 		timeDiff := time.Since(lastModified)
 		fmt.Printf("Last heartbeat received %s ago", timeDiff)
 		if timeDiff > noResponseThresholdMinutes * time.Minute {
-			fmt.Printf("Restarting due to no heartbeat received in %d minutes.", noResponseThresholdMinutes))
+			fmt.Printf("Restarting due to no heartbeat received in %d minutes.", noResponseThresholdMinutes)
 			restart()
 		}
 
